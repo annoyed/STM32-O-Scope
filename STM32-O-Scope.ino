@@ -9,8 +9,11 @@ Adafruit Libraries released under their specific licenses Copyright (c) 2013 Ada
 
 */
 
-#include "Adafruit_ILI9341_STM.h"
-#include "Adafruit_GFX_AS.h"
+// #include "Adafruit_ILI9341_STM.h"
+// #include "Adafruit_GFX_AS.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
+
 
 // Be sure to use the latest version of the SPI libraries see stm32duino.com - http://stm32duino.com/viewtopic.php?f=13&t=127
 #include <SPI.h>
@@ -76,7 +79,7 @@ uint32 tt;
 #define  TOUCH_CALIB_Z 2
 
 // Time library - https://github.com/PaulStoffregen/Time
-#include "Time.h" //If you have issues with the default Time library change the name of this library to Time1 for example.
+#include "Time1.h" //If you have issues with the default Time library change the name of this library to Time1 for example.
 #define TZ    "UTC+1"
 
 // End RTC and NVRam initialization
@@ -116,18 +119,18 @@ variants/generic_stm32f103c/board/board.h:#define BOARD_SPI2_SCK_PIN        PB13
 #define TEST_WAVE_PIN       PB1     //PB1 PWM 500 Hz 
 
 // Create the lcd object
-Adafruit_ILI9341_STM TFT = Adafruit_ILI9341_STM(TFT_CS, TFT_DC, TFT_RST); // Using hardware SPI
+Adafruit_ST7735 TFT = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST); // Using hardware SPI
 
 // LED - blinks on trigger events - leave this undefined if your board has no controllable LED
 // define as PC13 on the "Red/Blue Pill" boards and PD2 on the "Yellow Pill R"
 #define BOARD_LED PC13 //PB0
 
 // Display colours
-#define BEAM1_COLOUR ILI9341_GREEN
-#define BEAM2_COLOUR ILI9341_RED
+#define BEAM1_COLOUR ST7735_GREEN
+#define BEAM2_COLOUR ST7735_RED
 #define GRATICULE_COLOUR 0x07FF
-#define BEAM_OFF_COLOUR ILI9341_BLACK
-#define CURSOR_COLOUR ILI9341_GREEN
+#define BEAM_OFF_COLOUR ST7735_BLACK
+#define CURSOR_COLOUR ST7735_GREEN
 
 // Analog input
 #define ANALOG_MAX_VALUE 4096
@@ -195,7 +198,7 @@ uint32_t dataPoints32[maxSamples / 2];
 uint16_t *dataPoints = (uint16_t *)&dataPoints32;
 
 //array for computed data (speedup)
-uint16_t dataPlot[320]; //max(width,height) for this display
+uint16_t dataPlot[160]; //max(width,height) for this display
 
 
 // End of DMA indication
@@ -279,12 +282,13 @@ void setup()
   // Set up our sensor pin(s)
   pinMode(analogInPin, INPUT_ANALOG);
 
-  TFT.begin();
+  // TFT.begin();
+  TFT.initR(INITR_BLACKTAB);
   // initialize the display
   clearTFT();
   TFT.setRotation(PORTRAIT);
-  myHeight   = TFT.width() ;
-  myWidth  = TFT.height();
+  myHeight   = 128;
+  myWidth  = 160;
   TFT.setTextColor(CURSOR_COLOUR, BEAM_OFF_COLOUR) ;
 #if defined TOUCH_SCREEN_AVAILABLE
   touchCalibrate();
@@ -556,7 +560,7 @@ void showLabels()
 {
   TFT.setRotation(LANDSCAPE);
   TFT.setTextSize(1);
-  TFT.setCursor(10, 190);
+  TFT.setCursor(4, 90);
   // TFT.print("Y=");
   //TFT.print((samplingTime * xZoomFactor) / maxSamples);
   TFT.print(float (float(samplingTime) / float(maxSamples)));
@@ -569,8 +573,8 @@ void showLabels()
 //  TFT.print(displayTime);
   TFT.print(float (1000000 / float(displayTime)));
   TFT.print(" fps    ");
-  TFT.setTextSize(2);
-  TFT.setCursor(10, 210);
+  TFT.setTextSize(1);
+  TFT.setCursor(4, 110);
   TFT.print("0.3");
   TFT.setTextSize(1);
   TFT.print(" V/Div ");
@@ -865,7 +869,8 @@ void setCurrentTime() {
   serial_debug.print(thisArg.toInt() );
   serial_debug.println("]");
   setTime(thisArg.toInt());
-  time_t tt = now();
+  // time_t tt = now();
+  time_t tt = rt.getTime();
   rt.setTime(tt);
   serialCurrentTime();
 }
@@ -997,28 +1002,28 @@ void readTouch() {
 #endif
 
 void showCredits() {
-  TFT.setTextSize(2);                           // Small 26 char / line
+  TFT.setTextSize(1);                           // Small 26 char / line
   //TFT.setTextColor(CURSOR_COLOUR, BEAM_OFF_COLOUR) ;
-  TFT.setCursor(0, 50);
+  TFT.setCursor(0, 20);
   TFT.print(" STM-O-Scope by Andy Hull") ;
-  TFT.setCursor(0, 70);
+  TFT.setCursor(0, 30);
   TFT.print("      Inspired by");
-  TFT.setCursor(0, 90);
+  TFT.setCursor(0, 40);
   TFT.print("      Ray Burnette.");
-  TFT.setCursor(0, 130);
+  TFT.setCursor(0, 50);
   TFT.print("      Victor PV");
-  TFT.setCursor(0, 150);
+  TFT.setCursor(0, 60);
   TFT.print("      Roger Clark");
-  TFT.setCursor(0, 170);
+  TFT.setCursor(0, 70);
   TFT.print(" and all at stm32duino.com");
-  TFT.setCursor(0, 190);
+  TFT.setCursor(0, 80);
   TFT.print(" CH1 Probe STM32F Pin [");
   TFT.print(analogInPin);
   TFT.print("]");
-  TFT.setCursor(0, 220);
+  TFT.setCursor(0, 90);
   TFT.setTextSize(1);
   TFT.print("     GNU GENERAL PUBLIC LICENSE Version 2 ");
-  TFT.setTextSize(2);
+  TFT.setTextSize(1);
   TFT.setRotation(PORTRAIT);
 }
 
@@ -1055,4 +1060,3 @@ void sleepMode()
   // disableClocks();
   asm("wfi");
 }
-
